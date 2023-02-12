@@ -43,7 +43,7 @@ class Window():
 
 class Boss():
     boss_y = randint(200,700)
-    boss_life = 20
+    boss_life = 5
 
 class Target():
     target_y = randint(0,1080 - 351)
@@ -100,7 +100,7 @@ def create_laser(p,l):
 def move_laser(l):
     if l.laser_move == True:
         for i in range(len(l.laser_pos_list)):
-            l.laser_pos_list[i] += 10
+            l.laser_pos_list[i] += 15
     
 def delete_laser(l,p):
     try:
@@ -185,6 +185,7 @@ def main_game(w):
     target = DrawSprite("pic/target.png")
     bat = DrawSprite("pic/bat.png")
     boss = DrawSprite("pic/boss.png")
+    background = DrawSprite("pic/b.jpg")
     p = Player()
     l = Laser()
     e = Enemy()
@@ -207,7 +208,7 @@ def main_game(w):
             if pressed_key[ord(' ')] == True:
                 create_laser(p,l)
         
-        e.enemy_speed += 0.0001
+        e.enemy_speed += 0.0005
         w.screen.fill(white)
         pygame.draw.rect(w.screen, (255, 0, 0), rect_1,10)
         pygame.draw.rect(w.screen, (255, 0, 0), rect_2,10)
@@ -227,12 +228,13 @@ def main_game(w):
             #check_colision_laser_enemy(l,e)
             w.screen.fill(white)
             rect = pygame.Rect(0, 1060, 1920 - int(p.hp_draw), 20)
+            w.screen.blit(background.surf,(0,0))
             pygame.draw.rect(w.screen, red, rect)
             w.screen.blit(player.surf,(p.x,p.y))
-            if p.score > 20:
+            if p.score > 10 and b.boss_life > 0:
                 check_colision_boss(l,t,p,b)
                 w.screen.blit(boss.surf,(700,b.boss_y))
-            if b.boss_life > 0 and p.score > 20:
+            if b.boss_life > 0 and p.score > 9:
                 p.hp -= 0.01
                 p.hp_draw += 19.20 * (0.1)
 
@@ -249,12 +251,12 @@ def main_game(w):
                 lasery = l.laser_y_list[i] + 10
                 w.screen.blit(laser.surf,(laserx,lasery))
             w.screen.blit(target.surf,(1920 - 374,t.target_y))
-            GAME_FONT.render_to(w.screen, (0, 0), "SCORE " + str(p.score),(0,0,0))
+            GAME_FONT.render_to(w.screen, (0, 0), "SCORE " + str(p.score),(255,255,255))
             if p.score > file_score:
                 write_into_file("highscore.txt",str(p.score))
-                GAME_FONT.render_to(w.screen, (0, 80), "HIGHSCORE " + str(p.score),(0,0,0))
+                GAME_FONT.render_to(w.screen, (0, 80), "HIGHSCORE " + str(p.score),(255,255,255))
             else:
-                GAME_FONT.render_to(w.screen, (0, 80), "HIGHSCORE " + str(file_score),(0,0,0))
+                GAME_FONT.render_to(w.screen, (0, 80), "HIGHSCORE " + str(file_score),(255,255,255))
 
         elif menu == False and end_game == True:
             w.screen.fill(white)
