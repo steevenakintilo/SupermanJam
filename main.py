@@ -35,11 +35,15 @@ class DrawSprite(pygame.sprite.Sprite):
 class Window():
     pygame.init()
     pygame.mixer.init()
-    pygame.mixer.music.load("music/main.ogg")
-    pygame.mixer.music.play(-1)
+    #pygame.mixer.music.load("music/main.ogg")
+    #pygame.mixer.music.play(-1)
     #screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     state = 0
+
+class Boss():
+    boss_y = randint(200,700)
+    boss_life = 20
 
 class Target():
     target_y = randint(0,1080 - 351)
@@ -96,7 +100,7 @@ def create_laser(p,l):
 def move_laser(l):
     if l.laser_move == True:
         for i in range(len(l.laser_pos_list)):
-            l.laser_pos_list[i] += random.uniform(0.01, 10)
+            l.laser_pos_list[i] += 10
     
 def delete_laser(l,p):
     try:
@@ -126,14 +130,6 @@ def move_enemy(e):
     for i in range(len(e.enemy_pos_list)):
         e.enemy_pos_list[i] -= (1 + e.enemy_speed)
 
-def check_colision_laser_enemy(l,e):
-    for i in range(len(e.enemy_x_list)):
-        for j in range(len(l.laser_pos_list)):
-            #print(int(e.enemy_x_list[i]  + e.enemy_pos_list[i]) , int(l.laser_x_list[j] + l.laser_pos_list[j]))
-            if e.enemy_x_list[i]  + e.enemy_pos_list[i] == l.laser_x_list[j] + l.laser_pos_list[j]:
-                print("ok")
-            #print(e.enemy_x_list[i],l.laser_x_list[j])
-            #if l.laser_x_list[j] == e.enemy_x_list[i]:
 
 def delete_enemy(e):
     try:
@@ -157,15 +153,27 @@ def check_colision_player_enemy(p,e):
 def check_colision_target(l,t,p,e):
     for j in range(len(l.laser_pos_list)):
         #print(1920 - 374,1920,int(l.laser_x_list[j] + l.laser_pos_list[j]+187),int(l.laser_x_list[j] + l.laser_pos_list[j]-187))
-        if (1920 - 374) <= int(l.laser_x_list[j] + l.laser_pos_list[j] + 187) and t.target_y - 187 <= int(l.laser_y_list[j] - 54 - 187) and t.target_y + 187 <= int(l.laser_y_list[j] + 54 + 187):     
+        if (1920 - 374) <= int(l.laser_x_list[j] + l.laser_pos_list[j] + 187) and t.target_y - 187 <= int(l.laser_y_list[j] - 54 - 187) and int(l.laser_y_list[j] - 187 - 54) <= t.target_y:     
             pygame.mixer.Channel(0).play(pygame.mixer.Sound('music/hit.ogg'))
             l.laser_pos_list.remove(l.laser_pos_list[j])
             l.laser_x_list.remove(l.laser_x_list[j])
             l.laser_y_list.remove(l.laser_y_list[j])
             t.target_y = randint(0,1080 - 351)
             p.score += 1
-            e.enemy_speed += 0.1
+            #e.enemy_speed += 0.1
             #quit()
+
+def check_colision_boss(l,t,p,b):
+    for j in range(len(l.laser_pos_list)):
+        #print(1920 - 374,1920,int(l.laser_x_list[j] + l.laser_pos_list[j]+187),int(l.laser_x_list[j] + l.laser_pos_list[j]-187))
+        if (700) <= int(l.laser_x_list[j] + l.laser_pos_list[j] + 152) and b.boss_y - 103 <= int(l.laser_y_list[j] - 54 - 103) and int(l.laser_y_list[j] - 103 - 54) <= b.boss_y:     
+            pygame.mixer.Channel(0).play(pygame.mixer.Sound('music/hit.ogg'))
+            l.laser_pos_list.remove(l.laser_pos_list[j])
+            l.laser_x_list.remove(l.laser_x_list[j])
+            l.laser_y_list.remove(l.laser_y_list[j])
+            b.boss_y = randint(200,700)
+            b.boss_life -= 1
+            p.score += 1
 
 def main_game(w):
     white = (255,255,255)
@@ -176,10 +184,12 @@ def main_game(w):
     enemy = DrawSprite("pic/rock.png")
     target = DrawSprite("pic/target.png")
     bat = DrawSprite("pic/bat.png")
+    boss = DrawSprite("pic/boss.png")
     p = Player()
     l = Laser()
     e = Enemy()
     t = Target()
+    b = Boss()
     GAME_FONT = pygame.freetype.Font("font/font.ttf", 75)
     running = True
     file_score = int(print_file_content("highscore.txt"))
@@ -187,7 +197,6 @@ def main_game(w):
     menu = True
     rect_1 = pygame.Rect(600, 380, 600, 82)
     rect_2 = pygame.Rect(600, 580, 600, 82)
-
     while running:
         for event in pygame.event.get():
             pressed_key = pygame.key.get_pressed()
@@ -198,6 +207,7 @@ def main_game(w):
             if pressed_key[ord(' ')] == True:
                 create_laser(p,l)
         
+        e.enemy_speed += 0.0001
         w.screen.fill(white)
         pygame.draw.rect(w.screen, (255, 0, 0), rect_1,10)
         pygame.draw.rect(w.screen, (255, 0, 0), rect_2,10)
@@ -219,6 +229,13 @@ def main_game(w):
             rect = pygame.Rect(0, 1060, 1920 - int(p.hp_draw), 20)
             pygame.draw.rect(w.screen, red, rect)
             w.screen.blit(player.surf,(p.x,p.y))
+            if p.score > 20:
+                check_colision_boss(l,t,p,b)
+                w.screen.blit(boss.surf,(700,b.boss_y))
+            if b.boss_life > 0 and p.score > 20:
+                p.hp -= 0.01
+                p.hp_draw += 19.20 * (0.1)
+
             if p.hp_draw > 1920:
                 end_game = True
             
@@ -230,7 +247,6 @@ def main_game(w):
             for i in range(len(l.laser_x_list)):
                 laserx = p.x + p.sprite_height - 20 + l.laser_x_list[i] + l.laser_pos_list[i]
                 lasery = l.laser_y_list[i] + 10
-                #screen.blit(laser.surf,(p.x + p.sprite_height - 20 + p.laser_x_list[i] ,p.laser_y_list[i] + 10))
                 w.screen.blit(laser.surf,(laserx,lasery))
             w.screen.blit(target.surf,(1920 - 374,t.target_y))
             GAME_FONT.render_to(w.screen, (0, 0), "SCORE " + str(p.score),(0,0,0))
@@ -239,6 +255,7 @@ def main_game(w):
                 GAME_FONT.render_to(w.screen, (0, 80), "HIGHSCORE " + str(p.score),(0,0,0))
             else:
                 GAME_FONT.render_to(w.screen, (0, 80), "HIGHSCORE " + str(file_score),(0,0,0))
+
         elif menu == False and end_game == True:
             w.screen.fill(white)
             GAME_FONT.render_to(w.screen, (0, 0), "SCORE " + str(p.score),(0,0,0))
